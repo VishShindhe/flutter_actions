@@ -7,8 +7,8 @@ jobs:
     strategy:
       matrix:
         device:
-        - "iPhone 8 (13.1)"
-        - "iPhone 11 Pro Max (13.1)"
+        - "iPhone 8"
+        - "iPhone 11 Pro Max"
       fail-fast: false
 
     runs-on: macOS-latest
@@ -19,21 +19,16 @@ jobs:
 
     - name: "Start Simulator"
       run: |
-        UDID=$(
-          xcrun simctl list devices booted |
-          grep "${{ matrix.device }}" |
-          awk -F '[()]' '{print $2}'
-        )
+        DEVICE_NAME="${{ matrix.device }}"
+        UDID=$(xcrun simctl list devices available | grep "$DEVICE_NAME" | head -n 1 | awk -F '[()]' '{print $2}')
+        
         if [ -z "$UDID" ]; then
-          echo "Booting up the simulator..."
-          UDID=$(
-            xcrun simctl list devices |
-            grep "${{ matrix.device }}" |
-            awk -F '[()]' '{print $2}'
-          )
-          xcrun simctl boot "$UDID"
+          echo "❌ No available simulator found for $DEVICE_NAME"
+          exit 1
         fi
-        echo "Using Simulator with UDID: $UDID"
+
+        echo "✅ Using Simulator with UDID: $UDID"
+        xcrun simctl boot "$UDID"
 
     - uses: actions/checkout@v1
 
